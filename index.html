@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ringside Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
+<style>
+/* Setup checker shown until the real board replaces this file. */
+:root{--bg:#EEF0F3;--surface:#fff;--line:#D3D8E0;--fg:#141821;--muted:#5B6474;--ok:#1E7F4E;--ok-soft:#DDF3E6;--bad:#C2362F;--bad-soft:#FBE4E2;
+  --f-display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;--f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0F1218;--surface:#181C25;--line:#2A303C;--fg:#E8EBF1;--muted:#A0A8B8;--ok:#5FD39A;--ok-soft:#14301F;--bad:#FF7A72;--bad-soft:#3A1A18;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-body)}
+main{max-width:720px;margin:0 auto;padding:40px 16px}
+h1{font:400 36px/1 var(--f-display);margin:0 0 6px}
+p{color:var(--muted);margin:0 0 20px}
+ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+li:first-child{border-top:0}
+.i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+.ok .i{background:var(--ok-soft);color:var(--ok)} .bad .i{background:var(--bad-soft);color:var(--bad)}
+.n{font-weight:600} .d{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.sum{margin-top:16px;font-weight:600}
+button{margin-top:12px;font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:7px 14px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ringside Board</h1>
+  <p>설정 점검 화면이에요. 모든 항목이 초록색이 되면 Claude에게 알려주세요. 이 화면이 실제 보드로 바뀌어요.</p>
+  <ul id="list"><li><span class="i">·</span><div><div class="n">점검 중…</div></div></li></ul>
+  <div class="sum" id="sum"></div>
+  <button type="button" id="again">다시 점검</button>
+</main>
+<script>
+async function run(){
+  const list=document.getElementById("list"),sum=document.getElementById("sum");
+  list.innerHTML='<li><span class="i">·</span><div><div class="n">점검 중…</div></div></li>';sum.textContent="";
+  try{
+    const r=await fetch("/api/health",{cache:"no-store"});const j=await r.json();
+    list.innerHTML="";
+    for(const c of j.checks){const li=document.createElement("li");li.className=c.ok?"ok":"bad";
+      li.innerHTML='<span class="i">'+(c.ok?"✓":"!")+'</span><div><div class="n"></div><div class="d"></div></div>';
+      li.querySelector(".n").textContent=c.name;li.querySelector(".d").textContent=c.detail||"";list.appendChild(li)}
+    sum.textContent=j.ok?"모두 준비됐어요. Claude에게 '점검 통과'라고 알려주세요.":"빨간 항목의 안내를 따라 고친 뒤 '다시 점검'을 눌러주세요.";
+  }catch(e){list.innerHTML="";sum.textContent="점검 API에 연결하지 못했어요: "+e.message}
+}
+document.getElementById("again").addEventListener("click",run);run();
+</script>
+</body>
+</html>
